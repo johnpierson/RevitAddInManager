@@ -532,11 +532,21 @@ public class AddInManagerViewModel : ViewModelBase
         MessageBoxResult result = MessageBox.Show("Are you sure that you want build msi?", Resource.AppName, MessageBoxButton.YesNo);
         if (result == MessageBoxResult.Yes)
         {
+            SaveFileBuildMsi();
             string location = Assembly.GetExecutingAssembly().Location;
             string dir = Path.GetDirectoryName(location);
             string exefile = Path.Combine(dir, "RevitBuildMsi.exe");
-            Process.Start(exefile);
+            if(!File.Exists(exefile)) MessageBox.Show("File Setup not exits, please send problem in github");
+            else
+            {
+                Process.Start(exefile);
+            }
         }
+    }
+
+    private void SaveFileBuildMsi()
+    {
+        //TODO : 
     }
     private void ShowSuccessfully()
     {
