@@ -361,6 +361,10 @@
                                     Command="{Binding SaveCommandFolder}"
                                     Header="Save As...."
                                     ToolTip="Save To New Folder" />
+                                <MenuItem
+                                    Command="{Binding BuildMsi}"
+                                    Header="Build Msi...."
+                                    ToolTip="Build Package Msi" />
                             </MenuItem>
                         </Menu>
                         <Button

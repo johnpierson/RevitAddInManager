@@ -8,6 +8,7 @@ using RevitAddinManager.View.Control;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
@@ -103,6 +104,7 @@ public class AddInManagerViewModel : ViewModelBase
     public ICommand RemoveCommand => new RelayCommand(RemoveAddinClick);
     public ICommand SaveCommand => new RelayCommand(SaveCommandClick);
     public ICommand SaveCommandFolder => new RelayCommand(SaveCommandLocalFolder);
+    public ICommand BuildMsi => new RelayCommand(BuildMsiClick);
 
     public ICommand OpenLocalAddinCommand => new RelayCommand(OpenLocalAddinCommandClick);
     public ICommand EditAddinCommand => new RelayCommand(EditAddinCommandClick);
@@ -525,6 +527,17 @@ public class AddInManagerViewModel : ViewModelBase
         }
     }
 
+    private void BuildMsiClick()
+    {
+        MessageBoxResult result = MessageBox.Show("Are you sure that you want build msi?", Resource.AppName, MessageBoxButton.YesNo);
+        if (result == MessageBoxResult.Yes)
+        {
+            string location = Assembly.GetExecutingAssembly().Location;
+            string dir = Path.GetDirectoryName(location);
+            string exefile = Path.Combine(dir, "RevitBuildMsi.exe");
+            Process.Start(exefile);
+        }
+    }
     private void ShowSuccessfully()
     {
         MessageBox.Show(FrmAddInManager, "Save Successfully", Resource.AppName, MessageBoxButton.OK, MessageBoxImage.Information);
