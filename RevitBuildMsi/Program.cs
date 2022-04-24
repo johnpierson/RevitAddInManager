@@ -1,151 +1,83 @@
-﻿using WixSharp;
+﻿using System.Diagnostics;
+using System.Text;
+using System.Text.RegularExpressions;
+using WixSharp;
 using IniParser;
+using WixSharp.CommonTasks;
+using WixSharp.Controls;
+using Console = System.Console;
+using Dir = WixSharp.Dir;
+using Directory = System.IO.Directory;
+using DirectoryInfo = System.IO.DirectoryInfo;
+using Files = WixSharp.Files;
+using Guid = System.Guid;
+using InstallDir = WixSharp.InstallDir;
+using InstallScope = WixSharp.InstallScope;
+using MajorUpgrade = WixSharp.MajorUpgrade;
+using Platform = WixSharp.Platform;
+using Project = WixSharp.Project;
+using SearchOption = System.IO.SearchOption;
+using Version = System.Version;
+using WixEntity = WixSharp.WixEntity;
+using WUI = WixSharp.WUI;
 
-public struct Config
+
+const string installationDir = @"%AppDataFolder%\Autodesk\Revit\Addins\";
+const string projectName = "RevitAddinManager";
+const string outputName = "RevitAddinManager";
+const string outputDir = @"D:\";
+const string version = "1.0.0";
+
+var fileName = new StringBuilder().Append(outputName).Append("-").Append(version);
+var project = new Project
 {
-    public string Company { get; private set; }
-
-    public string FullAppName { get; private set; }
-
-    public string AppName { get; private set; }
-
-    public string ShortCutName { get; private set; }
-
-    public string ExecutableName { get; private set; }
-
-    public string Manufacturer { get; private set; }
-
-    public string Contact { get; private set; }
-
-    public string BackgroungImage { get; private set; }
-
-    public string LicenceFile { get; private set; }
-
-    public string Guid { get; private set; }
-
-    public string OutFileName { get; private set; }
-
-    public string BannerImage { get; private set; }
-
-    public bool PreserveTempFiles { get; private set; }
-
-    public string ProductIcon { get; private set; }
-
-    public Config(string filename)
+    Name = projectName,
+    OutDir = outputDir,
+    Platform = Platform.x64,
+    Description = "Project Support Developer Work With Revit API",
+    UI = WUI.WixUI_InstallDir,
+    Version = new Version(version),
+    OutFileName = fileName.ToString(),
+    InstallScope = InstallScope.perUser,
+    MajorUpgrade = MajorUpgrade.Default,
+    GUID = new Guid("A0176A8B-2483-4073-B6BB-4A481D9B4439"),
+   // BackgroundImage = @"Installer\Resources\Icons\BackgroundImage.png",
+   // BannerImage = @"Installer\Resources\Icons\BannerImage.png",
+    ControlPanelInfo =
     {
-        try
-        {
-            var parser = new FileIniDataParser();
-            var data = parser.ReadFile(filename);
-            var config = data["config"];
-
-            Company = config["Company"];
-            FullAppName = config["FullAppName"];
-            AppName = config["AppName"];
-            ShortCutName = config["ShortCutName"];
-            ExecutableName = config["ExecutableName"];
-            Manufacturer = config["Manufacturer"];
-            Contact = config["Contact"];
-            BackgroungImage = config["BackgroungImage"];
-            LicenceFile = config["LicenceFile"];
-            Guid = config["Guid"];
-            OutFileName = config["OutFileName"];
-            BannerImage = config["BannerImage"];
-            PreserveTempFiles = config["PreserveTempFiles"].ToString() == true.ToString();
-            ProductIcon = config["ProductIcon"];
-        }
-        catch (Exception e)
-        {
-            throw new Exception(string.Format(
-                "Unable to read ini file, please refer to example_config.ini format. Error message: {0}", e.Message));
-        }
+        Manufacturer = "Autodesk",
+        HelpLink = "https://github.com/chuongmep/RevitAddInManager/issues",
+        Comments = "Project Support Developer With Revit API",
+       // ProductIcon = @"Installer\Resources\Icons\ShellIcon.ico"
+    },
+    Dirs = new Dir[]
+    {
+        new InstallDir(installationDir, GenerateWixEntities())
     }
-}
+};
 
-class Program
+project.RemoveDialogsBetween(NativeDialogs.WelcomeDlg, NativeDialogs.InstallDirDlg);
+project.BuildMsi();
+
+WixEntity[] GenerateWixEntities()
 {
-    private static readonly string configIniFilePath = GetArtifactsPath("config.ini");
+    var versionRegex = new Regex(@"\d+");
+    var versionStorages = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<WixEntity>>();
 
-    public static string GetArtifactsPath(string artifactFileName)
+    foreach (var directory in args)
     {
-        return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "artifacts", artifactFileName);
+        var directoryInfo = new DirectoryInfo(directory);
+        var fileVersion = versionRegex.Match(directoryInfo.Name).Value;
+        var files = new Files($@"{directory}\*.*");
+        if (versionStorages.ContainsKey(fileVersion))
+            versionStorages[fileVersion].Add(files);
+        else
+            versionStorages.Add(fileVersion, new System.Collections.Generic.List<WixEntity> { files });
+
+        var assemblies = Directory.GetFiles(directory, "*", SearchOption.AllDirectories);
+        Console.WriteLine($"Added '{fileVersion}' version files: ");
+        foreach (var assembly in assemblies) Console.WriteLine($"'{assembly}'");
     }
 
-    static void Main(string[] args)
-    {
-        if (args.Length != 3)
-        {
-            Console.WriteLine("Wrong command line arguments. Usage installer.exe path_to_binaries output_path version");
-            return;
-        }
-
-        var pathToBinaries = args[0];
-        var outputPath = args[1];
-        var version = args[2];
-
-        if (!System.IO.File.Exists(configIniFilePath))
-        {
-            Console.WriteLine("Can not find {0} file", configIniFilePath);
-            return;
-        }
-
-        var config = new Config(configIniFilePath);
-
-        var desktopIcon = new Feature("Desktop icon", "Add icon to Desktop");
-        var addToStarupMenu = new Feature("Add to Startup Menu", "Add application to Startup Menu");
-
-        Func<ExeFileShortcut> uninstallShortcut = () =>
-            new ExeFileShortcut(string.Format("Uninstall {0}", config.FullAppName), "[System64Folder]msiexec.exe",
-                "/x [ProductCode]");
-
-        var appFolder = string.Format(@"{0}\{1}", config.Company, config.AppName);
-        var project = new ManagedProject(
-            config.FullAppName,
-            new Dir(new Id("APPLICATIONFOLDER"),
-                appFolder,
-                new Files(string.Format(@"{0}\*.*", args[0])),
-                uninstallShortcut()),
-            new Dir(string.Format(@"%ProgramMenu%\{0}\{1}", config.Company, config.AppName),
-                uninstallShortcut(),
-                new ExeFileShortcut(addToStarupMenu, config.AppName,
-                    string.Format("[APPLICATIONFOLDER]{0}", config.ExecutableName), "")
-                {
-                    WorkingDirectory = "[APPLICATIONFOLDER]"
-                }),
-            new Dir(@"%Desktop%",
-                new ExeFileShortcut(desktopIcon, config.FullAppName,
-                    string.Format("[APPLICATIONFOLDER]{0}", config.ExecutableName), "")
-                {
-                    WorkingDirectory = "[APPLICATIONFOLDER]"
-                }),
-            new Property("ApplicationFolderName", appFolder),
-            new Property("WixAppFolder", "WixPerMachineFolder"),
-            new Property("ALLUSERS", "1")
-        );
-
-        project.Version = new Version(version);
-        project.ControlPanelInfo.Manufacturer = config.Manufacturer;
-        project.ControlPanelInfo.Contact = config.Contact;
-        project.UI = WUI.WixUI_Advanced;
-        project.ValidateBackgroundImage = false;
-
-        if (!string.IsNullOrWhiteSpace(config.BackgroungImage))
-        {
-            project.BackgroundImage = GetArtifactsPath(config.BackgroungImage);
-        }
-
-        if (!string.IsNullOrWhiteSpace(config.BannerImage))
-        {
-            project.BannerImage = GetArtifactsPath(config.BannerImage);
-        }
-
-        project.OutFileName = config.OutFileName;
-        project.OutDir = outputPath;
-        project.ControlPanelInfo.ProductIcon = GetArtifactsPath(config.ProductIcon);
-
-        project.PreserveTempFiles = config.PreserveTempFiles;
-        project.LicenceFile = GetArtifactsPath(config.LicenceFile);
-        project.GUID = new Guid(config.Guid);
-        project.BuildMsi();
-    }
+    return versionStorages.Select(storage => new Dir(storage.Key, storage.Value.ToArray())).Cast<WixEntity>().ToArray();
 }

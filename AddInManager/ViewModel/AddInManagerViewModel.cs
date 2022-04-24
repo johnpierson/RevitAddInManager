@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 
@@ -533,17 +534,28 @@ public class AddInManagerViewModel : ViewModelBase
         if (result == MessageBoxResult.Yes)
         {
             SaveFileBuildMsi();
-            string location = Assembly.GetExecutingAssembly().Location;
+            string location = SelectedCommandItem.AddinItem.AssemblyPath;
             string dir = Path.GetDirectoryName(location);
-            string exefile = Path.Combine(dir, "RevitBuildMsi.exe");
+            //string exefile = Path.Combine(dir, "RevitBuildMsi.exe");
+            string exefile = @"D:\API\Revit\RevitAddInManager\RevitBuildMsi\bin\Debug\net48\RevitBuildMsi.exe";
             if(!File.Exists(exefile)) MessageBox.Show("File Setup not exits, please send problem in github");
             else
             {
-                Process.Start(exefile);
+                var proc = new Process();
+                proc.StartInfo.FileName = exefile;
+                proc.StartInfo.Arguments = dir;
+                //proc.StartInfo.RedirectStandardOutput = true;
+                proc.Start();
+                //while (!proc.StandardOutput.EndOfStream) proc.StandardOutput.ReadLine();
+                proc.WaitForExit();
+                MessageBox.Show("Completed");
+                //if (proc.ExitCode != 0) throw new Exception("The installer creation failed.");
             }
+
+            
         }
     }
-
+    
     private void SaveFileBuildMsi()
     {
         //TODO : 
