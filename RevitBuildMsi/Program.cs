@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using WixSharp;
 using IniParser;
+using RevitBuildMsi;
 using WixSharp.CommonTasks;
 using WixSharp.Controls;
 using Console = System.Console;
@@ -21,34 +22,29 @@ using Version = System.Version;
 using WixEntity = WixSharp.WixEntity;
 using WUI = WixSharp.WUI;
 
-
-const string installationDir = @"%AppDataFolder%\Autodesk\Revit\Addins\";
-const string projectName = "RevitAddinManager";
-const string outputName = "RevitAddinManager";
-const string outputDir = @"D:\";
-const string version = "1.0.0";
-
-var fileName = new StringBuilder().Append(outputName).Append("-").Append(version);
+string pathconfig = @"D:\API\RevitAddInManager\RevitBuildMsi\bin\Debug\Config.ini";
+Config config = new Config(pathconfig);
+string installationDir = @"%AppDataFolder%\Autodesk\Revit\Addins\";
 var project = new Project
 {
-    Name = projectName,
-    OutDir = outputDir,
+    Name = config.ProjectName,
+    OutDir = config.OutputDir,
     Platform = Platform.x64,
-    Description = "Project Support Developer Work With Revit API",
+    Description = config.Description,
     UI = WUI.WixUI_InstallDir,
-    Version = new Version(version),
-    OutFileName = fileName.ToString(),
+    Version = new Version(config.Version),
+    OutFileName = GetFileName(),
     InstallScope = InstallScope.perUser,
     MajorUpgrade = MajorUpgrade.Default,
-    GUID = new Guid("A0176A8B-2483-4073-B6BB-4A481D9B4439"),
-   // BackgroundImage = @"Installer\Resources\Icons\BackgroundImage.png",
-   // BannerImage = @"Installer\Resources\Icons\BannerImage.png",
+    GUID = GetGuid(),
+    // BackgroundImage = @"Installer\Resources\Icons\BackgroundImage.png",
+    // BannerImage = @"Installer\Resources\Icons\BannerImage.png",
     ControlPanelInfo =
     {
-        Manufacturer = "Autodesk",
-        HelpLink = "https://github.com/chuongmep/RevitAddInManager/issues",
-        Comments = "Project Support Developer With Revit API",
-       // ProductIcon = @"Installer\Resources\Icons\ShellIcon.ico"
+        Manufacturer = config.Manufacturer,
+        HelpLink = config.HelpLink,
+        Comments = config.Comments,
+        // ProductIcon = @"Installer\Resources\Icons\ShellIcon.ico"
     },
     Dirs = new Dir[]
     {
@@ -61,23 +57,43 @@ project.BuildMsi();
 
 WixEntity[] GenerateWixEntities()
 {
-    var versionRegex = new Regex(@"\d+");
-    var versionStorages = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<WixEntity>>();
+    var versionStorages =
+        new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<WixEntity>>();
 
-    foreach (var directory in args)
+    var directoryInfo = new DirectoryInfo(config.DirContentFiles);
+    foreach (DirectoryInfo directory in directoryInfo.GetDirectories())
     {
-        var directoryInfo = new DirectoryInfo(directory);
-        var fileVersion = versionRegex.Match(directoryInfo.Name).Value;
-        var files = new Files($@"{directory}\*.*");
+        var fileVersion = directory.Name;
+        var files = new Files($@"{directory.FullName}\*.*");
         if (versionStorages.ContainsKey(fileVersion))
             versionStorages[fileVersion].Add(files);
         else
-            versionStorages.Add(fileVersion, new System.Collections.Generic.List<WixEntity> { files });
+            versionStorages.Add(fileVersion, new System.Collections.Generic.List<WixEntity> {files});
 
-        var assemblies = Directory.GetFiles(directory, "*", SearchOption.AllDirectories);
+        var assemblies = Directory.GetFiles(config.DirContentFiles, "*", SearchOption.AllDirectories);
         Console.WriteLine($"Added '{fileVersion}' version files: ");
         foreach (var assembly in assemblies) Console.WriteLine($"'{assembly}'");
     }
-
     return versionStorages.Select(storage => new Dir(storage.Key, storage.Value.ToArray())).Cast<WixEntity>().ToArray();
+}
+
+Guid GetGuid()
+{
+    string guid = config.Guid;
+    if (string.IsNullOrEmpty(guid))
+    {
+        return new Guid();
+    }
+
+    return new Guid(guid);
+}
+
+string GetFileName()
+{
+    if (string.IsNullOrEmpty(config.OutFileName))
+    {
+        return new StringBuilder().Append(config.ProjectName).Append("-").Append(config.Version).ToString();
+    }
+
+    return config.OutFileName;
 }

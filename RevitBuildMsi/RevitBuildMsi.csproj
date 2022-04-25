@@ -11,6 +11,9 @@
         <PackageReference Include="ini-parser">
           <Version>2.5.2</Version>
         </PackageReference>
+        <PackageReference Include="Nuke.Common">
+          <Version>6.0.1</Version>
+        </PackageReference>
         <PackageReference Include="WixSharp.bin">
             <Version>1.19.0</Version>
         </PackageReference>
@@ -20,5 +23,10 @@
     </ItemGroup>
     <ItemGroup>
       <Reference Include="System.Net.Http" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Update="Config.ini">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 </Project>

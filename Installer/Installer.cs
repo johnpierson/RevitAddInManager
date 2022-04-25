@@ -34,7 +34,7 @@ var project = new Project
         Manufacturer = "Autodesk",
         HelpLink = "https://github.com/chuongmep/RevitAddInManager/issues",
         Comments = "Project Support Developer With Revit API",
-        ProductIcon = @"Installer\Resources\Icons\ShellIcon.ico"
+        ProductIcon = @"Installer\Resources\Icons\ShellIcon.ico",
     },
     Dirs = new Dir[]
     {
