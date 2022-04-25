@@ -555,42 +555,11 @@ public class AddInManagerViewModel : ViewModelBase
             MessageBoxButton.YesNo,MessageBoxImage.Information,MessageBoxResult.Yes);
         if (result == MessageBoxResult.Yes)
         {
-            bool flag = CheckFileBuildMsi(out string filepath);
-            if (flag)
-            {
-                SetConfiguration();
-                var proc = new Process();
-                proc.StartInfo.FileName = filepath;
-                proc.Start();
-                proc.WaitForExit();
-                MessageBox.Show("Completed !");
-                
-            }
-            else
-            {
-                MessageBoxResult result2 = MessageBox.Show("Please Installer MsiBuilderToolkit !", Resource.AppName, MessageBoxButton.OKCancel,
-                    MessageBoxImage.Exclamation);
-                if (result2 == MessageBoxResult.OK) Process.Start(DefaultSetting.MsiBuilderToolkitPath);
-            }
+            ConfigMsi configMsi = new ConfigMsi();
+            configMsi.SetConfiguration();
+            configMsi.BuildMsi();
         }
     }
-
-    private void SetConfiguration()
-    {
-         //TODO : Set to file ini
-    }
-    private bool CheckFileBuildMsi(out string filepath)
-    {
-        filepath =  String.Empty;
-        string exeRun = DefaultSetting.exeRun;
-        if (File.Exists(exeRun))
-        {
-            filepath = exeRun;
-            return true;
-        }
-        return false;
-    }
-
     private void ShowSuccessfully()
     {
         MessageBox.Show(FrmAddInManager, "Save Successfully", Resource.AppName, MessageBoxButton.OK,
