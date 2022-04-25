@@ -24,8 +24,10 @@ public struct Config
     public string Manufacturer { get; private set; }
     public string HelpTelephone { get; private set; }
     public string Description { get; private set; }
+    public string InstallDir { get; private set; }
     public string DirContentFiles { get; private set; }
     public string OutFileName { get; private set; }
+    public string AutodeskProduct { get; private set; }
     
     public Config(string filename)
     {
@@ -50,8 +52,10 @@ public struct Config
             Manufacturer = config["Manufacturer"];
             HelpTelephone = config["HelpTelephone"];
             Description = config["Description"];
+            InstallDir = config["InstallDir"];
             DirContentFiles = config["DirContentFiles"];
             OutFileName = config["OutFileName"];
+            AutodeskProduct = config["AutodeskProduct"];
         }
         catch (Exception e)
         {

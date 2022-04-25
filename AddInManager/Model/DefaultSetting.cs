@@ -16,4 +16,6 @@ public static class DefaultSetting
     public static string TempFolderName = "RevitAddins";
 
     public static string AimInternalName = "AimInternal.ini";
+    public static string exeRun = @"C:\Program Files\ChuongMep\RevitBuildMsi\RevitBuildMsi.exe";
+    public static string MsiBuilderToolkitPath = @"https://github.com/chuongmep/MsiBuilderToolkit";
 }

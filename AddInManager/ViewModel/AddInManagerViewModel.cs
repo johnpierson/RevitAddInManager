@@ -13,6 +13,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
+using Microsoft.VisualStudio.Setup.Configuration;
 
 namespace RevitAddinManager.ViewModel;
 
@@ -59,6 +60,7 @@ public class AddInManagerViewModel : ViewModelBase
                 VendorDescription = MAddinManagerBase.ActiveCmdItem.Description;
             }
             else IsCanRun = false;
+
             return selectedCommandItem;
         }
         set => OnPropertyChanged(ref selectedCommandItem, value);
@@ -93,6 +95,7 @@ public class AddInManagerViewModel : ViewModelBase
                 MAddinManagerBase.ActiveApp = selectedAppItem.Addin;
                 VendorDescription = MAddinManagerBase.ActiveAppItem.Description;
             }
+
             return selectedAppItem;
         }
         set => OnPropertyChanged(ref selectedAppItem, value);
@@ -248,6 +251,7 @@ public class AddInManagerViewModel : ViewModelBase
                     });
                 }
             }
+
             var root = new AddinModel(title)
             {
                 IsChecked = true,
@@ -300,6 +304,7 @@ public class AddInManagerViewModel : ViewModelBase
             ShowFileNotExit(path);
             return;
         }
+
         Process.Start("explorer.exe", "/select, " + path);
     }
 
@@ -313,6 +318,7 @@ public class AddInManagerViewModel : ViewModelBase
             ShowFileNotExit(path);
             return;
         }
+
         Process.Start("explorer.exe", "/select, " + path);
     }
 
@@ -352,6 +358,7 @@ public class AddInManagerViewModel : ViewModelBase
         {
             return;
         }
+
         var fileName = openFileDialog.FileName;
         if (!File.Exists(fileName)) return;
         LoadAssemblyCommand(fileName);
@@ -368,11 +375,13 @@ public class AddInManagerViewModel : ViewModelBase
                 string fileName = Command.FilePath;
                 if (File.Exists(fileName)) MAddinManagerBase.AddinManager.LoadAddin(fileName, AssemLoader);
             }
+
             MAddinManagerBase.AddinManager.SaveToAimIni();
             CommandItems = FreshTreeItems(false, MAddinManagerBase.AddinManager.Commands);
             ApplicationItems = FreshTreeItems(false, MAddinManagerBase.AddinManager.Applications);
             return;
         }
+
         bool flag = MAddinManagerBase.ActiveCmd == null;
         if (flag) return;
         string path = MAddinManagerBase.ActiveCmd.FilePath;
@@ -407,6 +416,7 @@ public class AddInManagerViewModel : ViewModelBase
             default:
                 throw new ArgumentOutOfRangeException();
         }
+
         MAddinManagerBase.AddinManager.SaveToAimIni();
         CommandItems = FreshTreeItems(false, MAddinManagerBase.AddinManager.Commands);
         ApplicationItems = FreshTreeItems(false, MAddinManagerBase.AddinManager.Applications);
@@ -428,11 +438,13 @@ public class AddInManagerViewModel : ViewModelBase
                         {
                             MAddinManagerBase.AddinManager.Commands.RemoveAddIn(MAddinManagerBase.ActiveCmd);
                         }
+
                         MAddinManagerBase.ActiveCmd = null;
                         MAddinManagerBase.ActiveCmdItem = null;
                         CommandItems = FreshTreeItems(false, MAddinManagerBase.AddinManager.Commands);
                         return;
                     }
+
                     foreach (var addinChild in parent.Children)
                     {
                         if (addinChild.IsInitiallySelected)
@@ -450,8 +462,10 @@ public class AddInManagerViewModel : ViewModelBase
                     MAddinManagerBase.ActiveCmd = null;
                     MAddinManagerBase.ActiveCmdItem = null;
                 }
+
                 CommandItems = FreshTreeItems(false, MAddinManagerBase.AddinManager.Commands);
             }
+
             if (IsTabAppSelected)
             {
                 foreach (var parent in ApplicationItems)
@@ -464,11 +478,13 @@ public class AddInManagerViewModel : ViewModelBase
                         {
                             MAddinManagerBase.AddinManager.Applications.RemoveAddIn(MAddinManagerBase.ActiveApp);
                         }
+
                         MAddinManagerBase.ActiveApp = null;
                         MAddinManagerBase.ActiveAppItem = null;
                         ApplicationItems = FreshTreeItems(false, MAddinManagerBase.AddinManager.Applications);
                         return;
                     }
+
                     foreach (var addinChild in parent.Children)
                     {
                         if (addinChild.IsInitiallySelected)
@@ -486,8 +502,10 @@ public class AddInManagerViewModel : ViewModelBase
                     MAddinManagerBase.ActiveApp = null;
                     MAddinManagerBase.ActiveAppItem = null;
                 }
+
                 ApplicationItems = FreshTreeItems(false, MAddinManagerBase.AddinManager.Applications);
             }
+
             //Save All SetTings
             MAddinManagerBase.AddinManager.SaveToAimIni();
         }
@@ -499,15 +517,18 @@ public class AddInManagerViewModel : ViewModelBase
 
     private void SaveCommandClick()
     {
-        var messageBoxResult = MessageBox.Show(@"It will create file addin and load to Revit, do you want continue?", Resource.AppName,
+        var messageBoxResult = MessageBox.Show(@"It will create file addin and load to Revit, do you want continue?",
+            Resource.AppName,
             MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (messageBoxResult == MessageBoxResult.Yes)
         {
             if (!MAddinManagerBase.AddinManager.HasItemsToSave())
             {
-                MessageBox.Show(Resource.NoItemSelected, Resource.AppName, MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                MessageBox.Show(Resource.NoItemSelected, Resource.AppName, MessageBoxButton.OK,
+                    MessageBoxImage.Exclamation);
                 return;
             }
+
             MAddinManagerBase.AddinManager.SaveToAllUserManifest(this);
             ShowSuccessfully();
         }
@@ -530,39 +551,50 @@ public class AddInManagerViewModel : ViewModelBase
 
     private void BuildMsiClick()
     {
-        MessageBoxResult result = MessageBox.Show("Are you sure that you want build msi?", Resource.AppName, MessageBoxButton.YesNo);
+        MessageBoxResult result = MessageBox.Show("Are you sure that you want build msi?", Resource.AppName,
+            MessageBoxButton.YesNo,MessageBoxImage.Information,MessageBoxResult.Yes);
         if (result == MessageBoxResult.Yes)
         {
-            SaveFileBuildMsi();
-            string location = SelectedCommandItem.AddinItem.AssemblyPath;
-            string dir = Path.GetDirectoryName(location);
-            //string exefile = Path.Combine(dir, "RevitBuildMsi.exe");
-            string exefile = @"D:\API\Revit\RevitAddInManager\RevitBuildMsi\bin\Debug\net48\RevitBuildMsi.exe";
-            if(!File.Exists(exefile)) MessageBox.Show("File Setup not exits, please send problem in github");
+            bool flag = CheckFileBuildMsi(out string filepath);
+            if (flag)
+            {
+                SetConfiguration();
+                var proc = new Process();
+                proc.StartInfo.FileName = filepath;
+                proc.Start();
+                proc.WaitForExit();
+                MessageBox.Show("Completed !");
+                
+            }
             else
             {
-                var proc = new Process();
-                proc.StartInfo.FileName = exefile;
-                proc.StartInfo.Arguments = dir;
-                //proc.StartInfo.RedirectStandardOutput = true;
-                proc.Start();
-                //while (!proc.StandardOutput.EndOfStream) proc.StandardOutput.ReadLine();
-                proc.WaitForExit();
-                MessageBox.Show("Completed");
-                //if (proc.ExitCode != 0) throw new Exception("The installer creation failed.");
+                MessageBoxResult result2 = MessageBox.Show("Please Installer MsiBuilderToolkit !", Resource.AppName, MessageBoxButton.OKCancel,
+                    MessageBoxImage.Exclamation);
+                if (result2 == MessageBoxResult.OK) Process.Start(DefaultSetting.MsiBuilderToolkitPath);
             }
-
-            
         }
     }
-    
-    private void SaveFileBuildMsi()
+
+    private void SetConfiguration()
     {
-        //TODO : 
+         //TODO : Set to file ini
     }
+    private bool CheckFileBuildMsi(out string filepath)
+    {
+        filepath =  String.Empty;
+        string exeRun = DefaultSetting.exeRun;
+        if (File.Exists(exeRun))
+        {
+            filepath = exeRun;
+            return true;
+        }
+        return false;
+    }
+
     private void ShowSuccessfully()
     {
-        MessageBox.Show(FrmAddInManager, "Save Successfully", Resource.AppName, MessageBoxButton.OK, MessageBoxImage.Information);
+        MessageBox.Show(FrmAddInManager, "Save Successfully", Resource.AppName, MessageBoxButton.OK,
+            MessageBoxImage.Information);
         FrmAddInManager.Close();
     }
 
@@ -576,6 +608,7 @@ public class AddInManagerViewModel : ViewModelBase
                 CommandItems = FreshTreeItems(false, MAddinManagerBase.AddinManager.Commands);
                 return;
             }
+
             CommandItems = FreshTreeItems(true, MAddinManagerBase.AddinManager.Commands);
         }
         else if (IsTabAppSelected)
@@ -585,6 +618,7 @@ public class AddInManagerViewModel : ViewModelBase
                 ApplicationItems = FreshTreeItems(false, MAddinManagerBase.AddinManager.Applications);
                 return;
             }
+
             ApplicationItems = FreshTreeItems(true, MAddinManagerBase.AddinManager.Applications);
         }
         else
@@ -617,7 +651,7 @@ public class AddInManagerViewModel : ViewModelBase
         var revitAddins = GetAddinFromFolder(Folder1);
         var addinsProgramData = GetAddinFromFolder(Folder2);
         var addinsPlugins = GetAddinFromFolder(Folder3);
-        revitAddins.ForEach(delegate (RevitAddin x)
+        revitAddins.ForEach(delegate(RevitAddin x)
         {
             addinStartup.Add(x);
             x.IsReadOnly = true;
@@ -631,6 +665,7 @@ public class AddInManagerViewModel : ViewModelBase
             OnPropertyChanged(nameof(AddInStartUps));
             return;
         }
+
         addinStartup = addinStartup.OrderBy(x => x.Name).ToObservableCollection();
     }
 
@@ -639,7 +674,7 @@ public class AddInManagerViewModel : ViewModelBase
         var revitAddins = new List<RevitAddin>();
         if (!Directory.Exists(folder)) return revitAddins;
         var AddinFilePathsVisible = Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories)
-        .Where(x => x.EndsWith(DefaultSetting.FormatExAddin)).ToArray();
+            .Where(x => x.EndsWith(DefaultSetting.FormatExAddin)).ToArray();
         foreach (var AddinFilePath in AddinFilePathsVisible)
         {
             var revitAddin = new RevitAddin();
@@ -650,6 +685,7 @@ public class AddInManagerViewModel : ViewModelBase
             revitAddin.State = VisibleModel.Enable;
             revitAddins.Add(revitAddin);
         }
+
         var AddinFilePathsDisable = Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories)
             .Where(x => x.EndsWith(DefaultSetting.FormatDisable)).ToArray();
         foreach (var AddinFilePath in AddinFilePathsDisable)
@@ -662,6 +698,7 @@ public class AddInManagerViewModel : ViewModelBase
             revitAddin.State = VisibleModel.Disable;
             revitAddins.Add(revitAddin);
         }
+
         if (AddinFilePathsVisible.Length == 0) return new List<RevitAddin>();
         return revitAddins;
     }
@@ -672,6 +709,7 @@ public class AddInManagerViewModel : ViewModelBase
         {
             revitAddin.SetToggleState();
         }
+
         FrmAddInManager.Close();
         MessageBox.Show(Resource.Successfully, Resource.AppName);
     }
@@ -699,9 +737,11 @@ public class AddInManagerViewModel : ViewModelBase
                 var filePaths = Directory.GetFiles(folder).Where(x => x.Contains(DefaultSetting.FileName)).ToArray();
                 if (filePaths.Length == 0)
                 {
-                    MessageBox.Show(FrmAddInManager, "File Empty!", Resource.AppName, MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    MessageBox.Show(FrmAddInManager, "File Empty!", Resource.AppName, MessageBoxButton.OK,
+                        MessageBoxImage.Exclamation);
                     return;
                 }
+
                 foreach (var s in filePaths)
                     Process.Start("explorer.exe", "/select, " + s);
             }
