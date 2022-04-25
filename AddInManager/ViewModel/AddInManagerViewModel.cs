@@ -8,12 +8,9 @@ using RevitAddinManager.View.Control;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
-using Microsoft.VisualStudio.Setup.Configuration;
 
 namespace RevitAddinManager.ViewModel;
 
