@@ -1,18 +1,13 @@
 
 # Revit Add-in Manager
-![Revit API](https://img.shields.io/badge/Revit%20API%202023-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Windows-lightgray.svg)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-<a href="https://twitter.com/intent/follow?screen_name=chuongmep">
-        <img src="https://img.shields.io/twitter/follow/chuongmep?style=social&logo=twitter"
-            alt="follow on Twitter"></a>
+![Revit API](https://img.shields.io/badge/Revit%20API%202023-blue.svg) ![Platform](https://img.shields.io/badge/platform-Windows-lightgray.svg) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-![ReSharper](https://img.shields.io/badge/ReSharper-2021.3.3-yellow)
-![Rider](https://img.shields.io/badge/Rider-2021.3.3-yellow)
-![Visual Studio 2022](https://img.shields.io/badge/Visual_Studio_2022_Preview_2.0-17.1.0-yellow)
-![.NET Framework](https://img.shields.io/badge/.NET_6.0-yellow)
+![ReSharper](https://img.shields.io/badge/ReSharper-2021.3.3-yellow) ![Rider](https://img.shields.io/badge/Rider-2021.3.3-yellow) ![Visual Studio 2022](https://img.shields.io/badge/Visual_Studio_2022_Preview_2.0-17.1.0-yellow) ![.NET Framework](https://img.shields.io/badge/.NET_6.0-yellow)
 
 [![Publish](../../actions/workflows/Workflow.yml/badge.svg)](../../actions)
+<a href="https://twitter.com/intent/follow?screen_name=chuongmep">
+<img src="https://img.shields.io/twitter/follow/chuongmep?style=social&logo=twitter"
+alt="follow on Twitter"></a>
 
 ## Summary
 
@@ -23,6 +18,8 @@ The product will be expanded in the future in process to support mutiple platfor
 - [x] [Revit Add-In Manager](https://github.com/chuongmep/RevitAddInManager)
 
 - [x] [Navis Add-In Manager](https://github.com/chuongmep/NavisAddInManager)
+
+- [x] [Cad Add-In Manager](https://github.com/chuongmep/CadAddInManager)
 
 - [x] More...
 
@@ -35,6 +32,7 @@ The product will be expanded in the future in process to support mutiple platfor
     - AddInManagerReadOnly
     - Application
 - Startup manager
+- Debug / Trace : Support Show result use Debug.Write(), Debug.WriteLine(), Trace.Write(), Trace.WriteLine()
 - Quick create `.addin` and load to `Revit`
 - Clear Cache saved in temp folder
 - Quick remove an Add-in not used in working process
@@ -61,10 +59,20 @@ The product will be expanded in the future in process to support mutiple platfor
 
 ### Startup
 
-![](pic/AddinManagerStartup.png)
-
 - [x] Show info all add-in installed in computer include all Add-in from Autodesk.
 - [x] Enable or Disable Add-in.
+
+- ![](pic/AddinManagerStartup.png)
+
+### Trace/Debug
+
+- [x] Show/Hide result inside **Dockpanel Revit**.
+- [x] Show Result history inside **Revit Addin Manager**.
+- [x] Clear Result.
+- [X] Show Result by color.
+
+- ![](pic/debug-trace.png)
+
 
 ---
 
@@ -76,6 +84,35 @@ Please follow last release at section [Release](https://github.com/chuongmep/Rev
 
 ## Guideline
 
+- Quick Example to Execute a Command : 
+``` cs
+[Transaction(TransactionMode.Manual)]
+    public class TestCommand : IExternalCommand
+    {
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+        {
+            //Code Something 
+            return Result.Succeeded;
+        }
+    }
+```
+- Quick Example to Debug or Trace result output :
+
+```cs
+[Transaction(TransactionMode.Manual)]
+    public class TraceWriteLine : IExternalCommand
+    {
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+        {
+            //Trace or Debug Something
+            Debug.Write($"Message output");
+            Debug.WriteLine($"Message output");
+            Trace.Write($"Message output");
+            Trace.WriteLine($"Message output");
+            return Result.Succeeded;
+        }
+    }
+```
 You can visit to wiki and read document or access by this [link](https://github.com/chuongmep/RevitAddInManager/wiki).
 
 Some topic common:
@@ -83,6 +120,7 @@ Some topic common:
 - [How to Uninstall Add In Manager](https://github.com/chuongmep/RevitAddInManager/wiki/How-to-Uninstall-AddinManager)
 - [How To Use Add In Manager](https://github.com/chuongmep/RevitAddInManager/wiki/How-To-Use-Add-In-Manager)
 - [Fix Problem With Installer AddinManager](https://github.com/chuongmep/RevitAddInManager/wiki/Fix-Problem-With-Installer-AddinManager)
+- [How To Use Deubg Trace Show Output](https://github.com/chuongmep/RevitAddInManager/wiki/How-To-Use-Deubg-Trace-Show-Output)
 
 ---
 
@@ -117,9 +155,9 @@ Please refer to the [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ## Sponsors
 
-Thanks to [JetBrains](https://www.jetbrains.com/) for providing licenses for [Rider](https://www.jetbrains.com/rider/) and [dotUltimate](https://www.jetbrains.com/dotnet/) tools, which both make open-source development a real pleasure!
-
 ![](pic/jetbrains.png)
+
+Thanks for providing a free All product IDE for this project.
 
 ---
 

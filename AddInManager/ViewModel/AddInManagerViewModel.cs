@@ -8,6 +8,7 @@ using RevitAddinManager.View.Control;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
@@ -98,6 +99,8 @@ public class AddInManagerViewModel : ViewModelBase
         set => OnPropertyChanged(ref selectedAppItem, value);
     }
 
+    public AssemblyInfo AssemblyInfo { get; set; }
+
     public ICommand LoadCommand => new RelayCommand(LoadCommandClick);
     public ICommand ManagerCommand => new RelayCommand(ManagerCommandClick);
     public ICommand ClearCommand => new RelayCommand(ClearCommandClick);
@@ -113,6 +116,7 @@ public class AddInManagerViewModel : ViewModelBase
     private readonly ICommand _executeAddinCommand = null;
     public ICommand ExecuteAddinCommand => _executeAddinCommand ?? new RelayCommand(ExecuteAddinCommandClick);
     public ICommand OpenLcAssemblyCommand => new RelayCommand(OpenLcAssemblyCommandClick);
+    public ICommand OpenRefsAssemblyCommand => new RelayCommand(OpenRefsAssemblyCommandClick);
     public ICommand ReloadCommand => new RelayCommand(ReloadCommandClick);
     public ICommand OpenLcAssemblyApp => new RelayCommand(OpenLcAssemblyAppClick);
     public ICommand ExecuteAddinApp => new RelayCommand(ExecuteAddinAppClick);
@@ -303,6 +307,32 @@ public class AddInManagerViewModel : ViewModelBase
         }
 
         Process.Start("explorer.exe", "/select, " + path);
+    }
+
+    private void OpenRefsAssemblyCommandClick()
+    {
+        string filePath = SelectedCommandItem.Addin.FilePath;
+        if (!File.Exists(filePath)) return;
+        try
+        {
+            AssemLoader.HookAssemblyResolve();
+            Assembly assembly = AssemLoader.LoadAddinsToTempFolder(filePath, false);
+            if (assembly == null) return;
+            AssemblyInfo = new AssemblyInfo(assembly);
+            FrmAssemblyInfo frmAssemblyInfo = new FrmAssemblyInfo(this);
+            frmAssemblyInfo.SetRevitAsWindowOwner();
+            frmAssemblyInfo.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            frmAssemblyInfo.ShowDialog();
+        }
+        catch (Exception e)
+        {
+            MessageBox.Show(e.ToString());
+        }
+        finally
+        {
+            AssemLoader.UnhookAssemblyResolve();
+            AssemLoader.CopyGeneratedFilesBack();
+        }
     }
 
     private void OpenLcAssemblyAppClick()
