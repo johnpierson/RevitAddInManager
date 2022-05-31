@@ -36,6 +36,7 @@ public partial class AssemblyLoader : Window
         openFileDialog.Multiselect = true;
         openFileDialog.Filter = "Assembly files (*.dll;*.exe,*.mcl)|*.dll;*.exe;*.mcl|All files|*.*||";
         openFileDialog.ShowDialog();
+        //TODO : Change to selection of multiple files
         TbxAssemPath.Text = openFileDialog.FileName;
     }
 
