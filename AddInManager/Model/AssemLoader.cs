@@ -31,7 +31,7 @@ public class AssemLoader
     public void CopyGeneratedFilesBack()
     {
         var files = Directory.GetFiles(tempFolder, "*.*", SearchOption.AllDirectories);
-        if(!files.Any()) return;
+        if (!files.Any()) return;
         foreach (var text in files)
         {
             if (copiedFiles.ContainsKey(text))
@@ -66,10 +66,12 @@ public class AssemLoader
 
     public Assembly LoadAddinsToTempFolder(string originalFilePath, bool parsingOnly)
     {
-        if (string.IsNullOrEmpty(originalFilePath) || originalFilePath.StartsWith("\\") || !File.Exists(originalFilePath))
+        if (string.IsNullOrEmpty(originalFilePath) || originalFilePath.StartsWith("\\") ||
+            !File.Exists(originalFilePath))
         {
             return null;
         }
+
         this.parsingOnly = parsingOnly;
         originalFolder = Path.GetDirectoryName(originalFilePath);
         var stringBuilder = new StringBuilder(Path.GetFileNameWithoutExtension(originalFilePath));
@@ -81,6 +83,7 @@ public class AssemLoader
         {
             stringBuilder.Append("-Executing-");
         }
+
         tempFolder = FileUtils.CreateTempFolder(stringBuilder.ToString());
         var assembly = CopyAndLoadAddin(originalFilePath, parsingOnly);
 
@@ -88,11 +91,13 @@ public class AssemLoader
         {
             return null;
         }
+
         return assembly;
     }
 
     private Assembly CopyAndLoadAddin(string srcFilePath, bool onlyCopyRelated)
     {
+        Trace.WriteLine("CopyAndLoadAddin: " + srcFilePath + " to " + tempFolder);
         var text = string.Empty;
         if (!FileUtils.FileExistsInFolder(srcFilePath, tempFolder))
         {
@@ -101,17 +106,20 @@ public class AssemLoader
             {
                 refedFolders.Add(directoryName);
             }
+
             var list = new List<FileInfo>();
             text = FileUtils.CopyFileToFolder(srcFilePath, tempFolder, onlyCopyRelated, list);
             if (string.IsNullOrEmpty(text))
             {
                 return null;
             }
+
             foreach (var fileInfo in list)
             {
                 copiedFiles.Add(fileInfo.FullName, fileInfo.LastWriteTime);
             }
         }
+
         return LoadAddin(text);
     }
 
@@ -129,13 +137,14 @@ public class AssemLoader
         {
             Monitor.Exit(this);
         }
+
         return result;
     }
 
     private Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
     {
         Assembly result = null;
-        if(string.IsNullOrEmpty(args.Name))return null;
+        if (string.IsNullOrEmpty(args.Name)) return null;
         var text = SearchAssemblyFileInTempFolder(args.Name);
         if (File.Exists(text))
         {
@@ -144,7 +153,7 @@ public class AssemLoader
         }
         else
         {
-            Trace.WriteLine("Case Not File:"+text);
+            Trace.WriteLine("Case Not File:" + text);
             Trace.WriteLine("args.Name:" + args.Name);
             text = SearchAssemblyFileInOriginalFolders(args.Name);
             if (string.IsNullOrEmpty(text))
@@ -154,42 +163,49 @@ public class AssemLoader
                     ','
                 });
                 var text2 = array[0];
-                Trace.WriteLine("Test:"+text2);
-                Trace.WriteLine("Length Array:"+array.Length);
+                Trace.WriteLine("Test:" + text2);
+                Trace.WriteLine("Length Array:" + array.Length);
                 if (array.Length > 1)
                 {
                     var text3 = array[2];
-                    Trace.WriteLine("Text3:"+text3);
-                    if (text2.EndsWith(".resources", StringComparison.CurrentCultureIgnoreCase) && !text3.EndsWith("neutral", StringComparison.CurrentCultureIgnoreCase))
+                    Trace.WriteLine("Text3:" + text3);
+                    if (text2.EndsWith(".resources", StringComparison.CurrentCultureIgnoreCase) &&
+                        !text3.EndsWith("neutral", StringComparison.CurrentCultureIgnoreCase))
                     {
                         Trace.WriteLine("Sub String Text2");
                         text2 = text2.Substring(0, text2.Length - ".resources".Length);
-                        Trace.WriteLine("Text2 Sub:"+text2);
+                        Trace.WriteLine("Text2 Sub:" + text2);
                     }
+
                     text = SearchAssemblyFileInTempFolder(text2);
                     if (File.Exists(text))
                     {
                         return LoadAddin(text);
                     }
+
                     text = SearchAssemblyFileInOriginalFolders(text2);
                 }
-              
             }
-            if (string.IsNullOrEmpty(text))
+
+            if (!string.IsNullOrEmpty(text))
             {
-                Trace.WriteLine("Resolve Assembly Manual");
-                var loader = new AssemblyLoader(args.Name);
-                loader.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                if (loader.ShowDialog() != true)
-                {
-                    return null;
-                }
-                text = loader.resultPath;
+                return CopyAndLoadAddin(text, true);
             }
-           
-            result = CopyAndLoadAddin(text, true);
+            Trace.WriteLine("Resolve Assembly Manual");
+            var loader = new AssemblyLoader(args.Name);
+            loader.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            if (loader.ShowDialog() != true)
+            {
+                return null;
+            }
+            text = loader.resultPath;
+            if (!string.IsNullOrEmpty(text))
+            {
+                return CopyAndLoadAddin(text, true);
+            }
         }
 
+        if (result == null) Trace.WriteLine("Resolve Assembly Fail:" + args.Name);
         return result;
     }
 
@@ -199,7 +215,7 @@ public class AssemLoader
         {
             var defaultValue = string.Empty;
             if (string.IsNullOrEmpty(assemName)) return defaultValue;
-            var array = new string[] { ".dll", ".exe" };
+            var array = new string[] {".dll", ".exe"};
             string assName = string.Empty;
             if (assemName.Contains(','))
             {
@@ -213,6 +229,7 @@ public class AssemLoader
                     }
                 }
             }
+
             foreach (var str2 in array)
             {
                 defaultValue = tempFolder + "\\" + assName + str2;
@@ -227,6 +244,7 @@ public class AssemLoader
             Trace.WriteLine(e.ToString());
             throw new ArgumentException(e.ToString());
         }
+
         return string.Empty;
     }
 
@@ -251,6 +269,7 @@ public class AssemLoader
                 }
             }
         }
+
         foreach (var extension in array)
         {
             foreach (var str3 in refedFolders)
@@ -262,9 +281,11 @@ public class AssemLoader
                 }
             }
         }
+
         try
         {
-            var directoryInfo = new DirectoryInfo(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName));
+            var directoryInfo =
+                new DirectoryInfo(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName));
             var path = directoryInfo.Parent?.FullName + "\\Regression\\_RegressionTools\\";
             if (Directory.Exists(path))
             {
@@ -295,6 +316,7 @@ public class AssemLoader
         {
             throw new ArgumentException(e.ToString());
         }
+
         return null;
     }
 
@@ -312,6 +334,7 @@ public class AssemLoader
                 }
             }
         }
+
         foreach (var assemblyName in assembly.GetReferencedAssemblies())
         {
             if (revitApiAssemblyFullName == assemblyName.Name)
@@ -319,6 +342,7 @@ public class AssemLoader
                 return true;
             }
         }
+
         return false;
     }
 
@@ -332,7 +356,8 @@ public class AssemLoader
 
     private string tempFolder;
 
-    private static string dotnetDir = Environment.GetEnvironmentVariable("windir") + "\\Microsoft.NET\\Framework\\v2.0.50727";
+    private static string dotnetDir =
+        Environment.GetEnvironmentVariable("windir") + "\\Microsoft.NET\\Framework\\v2.0.50727";
 
     public static string ResolvedAssemPath = string.Empty;
 

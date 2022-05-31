@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Windows;
@@ -32,6 +33,7 @@ public partial class AssemblyLoader : Window
     {
         
         OpenFileDialog openFileDialog = new OpenFileDialog();
+        openFileDialog.Multiselect = true;
         openFileDialog.Filter = "Assembly files (*.dll;*.exe,*.mcl)|*.dll;*.exe;*.mcl|All files|*.*||";
         openFileDialog.ShowDialog();
         TbxAssemPath.Text = openFileDialog.FileName;
