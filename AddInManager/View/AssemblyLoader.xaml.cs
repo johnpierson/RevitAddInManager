@@ -18,8 +18,8 @@ public partial class AssemblyLoader : Window
     public AssemblyLoader(string assemName)
     {
         InitializeComponent();
-        _assemName = assemName;
-        tbxAssembly.Content = assemName;
+        // _assemName = assemName;
+        // tbxAssembly.Content = assemName;
     }
 
     private void ShowWarning()
@@ -30,19 +30,10 @@ public partial class AssemblyLoader : Window
 
     private void ButtonBase_OnClick(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrEmpty(_assemName))
-        {
-            MessageBox.Show("Assembly null", Resource.AppName);
-            return;
-        }
+        
         OpenFileDialog openFileDialog = new OpenFileDialog();
         openFileDialog.Filter = "Assembly files (*.dll;*.exe,*.mcl)|*.dll;*.exe;*.mcl|All files|*.*||";
-        var str = _assemName.Substring(0, _assemName.IndexOf(','));
-        openFileDialog.FileName = str + ".*";
-        if (openFileDialog.ShowDialog() == true)
-        {
-            ShowWarning();
-        }
+        openFileDialog.ShowDialog();
         TbxAssemPath.Text = openFileDialog.FileName;
     }
 
