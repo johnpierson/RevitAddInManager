@@ -1,6 +1,7 @@
 ﻿using RevitAddinManager.ViewModel;
 using System.Windows;
 using System.Windows.Input;
+using RevitAddinManager.Model;
 
 namespace RevitAddinManager.View;
 
@@ -13,7 +14,8 @@ public partial class FrmAddInManager : Window
 
     public FrmAddInManager(AddInManagerViewModel vm)
     {
-        InitializeComponent();
+        // InitializeComponent();
+        this.LoadViewFromUri("/RevitAddinManager;component/view/frmaddinmanager.xaml");
         DataContext = vm;
         viewModel = vm;
         vm.FrmAddInManager = this;
